@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SportSort | Student Grouping System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header class="topbar">
+        <a class="brand" href="/">
+            <span class="brand-icon">S</span>
+            <span>SportSort</span>
+        </a>
+
+        <span class="topbar-label">STUDENT GROUPING SYSTEM</span>
+    </header>
+
+    <main class="container">
+
+        <section class="hero">
+            <div class="eyebrow">
+                <span class="status-dot"></span>
+                SMART SPORTS GROUPING
+            </div>
+
+            <h1>
+                Organize your <span>heats.</span>
+                Simplify your events.
+            </h1>
+
+            <p class="hero-description">
+                Upload your student spreadsheets and let SportSort
+                automatically create balanced, fair and organized
+                groups for every sports event.
+            </p>
+        </section>
+
+        {% if error %}
+            <div class="alert">
+                <strong>Unable to process your files</strong>
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <section class="upload-card">
+
+            <div class="card-heading">
+                <div>
+                    <h2>Upload student files</h2>
+                    <p>Select one or more Excel or CSV files.</p>
+                </div>
+
+                <div class="file-icon">↥</div>
+            </div>
+
+            <form method="POST"
+                  action="/"
+                  enctype="multipart/form-data"
+                  id="upload-form">
+
+                <label class="drop-zone" for="files" id="drop-zone">
+                    <span class="upload-symbol">↑</span>
+
+                    <strong>Drag and drop your files here</strong>
+
+                    <span class="drop-description">
+                        or <span class="browse-text">browse files</span>
+                        from your device
+                    </span>
+
+                    <span class="file-types">
+                        SUPPORTED FORMATS: XLSX, XLS, CSV
+                    </span>
+                </label>
+
+                <input
+                    type="file"
+                    id="files"
+                    name="files"
+                    accept=".xlsx,.xls,.csv"
+                    multiple
+                    required
+                >
+
+                <div class="selected-files" id="selected-files"></div>
+
+                <div class="rules-panel">
+                    <h3>SportSort grouping rules</h3>
+
+                    <div class="rule">
+                        <span class="rule-check">✓</span>
+                        <span>
+                            <strong>Maximum 8 students</strong>
+                            in each heat.
+                        </span>
+                    </div>
+
+                    <div class="rule">
+                        <span class="rule-check">✓</span>
+                        <span>
+                            <strong>Balanced distribution:</strong>
+                            students are divided as evenly as possible.
+                        </span>
+                    </div>
+
+                    <div class="rule">
+                        <span class="rule-check">✓</span>
+                        <span>
+                            <strong>One student per school</strong>
+                            in each heat.
+                        </span>
+                    </div>
+
+                    <div class="rule">
+                        <span class="rule-check">✓</span>
+                        <span>
+                            Category is automatically detected
+                            from the spreadsheet.
+                        </span>
+                    </div>
+
+                    <div class="rule">
+                        <span class="rule-check">✓</span>
+                        <span>
+                            Separate heats are created for each
+                            sports event.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="format-note">
+                    <strong>Required spreadsheet columns</strong>
+
+                    <p>
+                        Student Name · Chest Number · School Name ·
+                        Category · Sports Event
+                    </p>
+
+                    <small>
+                        Column headings can use common alternative names.
+                        Each uploaded file should contain only one category.
+                    </small>
+                </div>
+
+                <button type="submit"
+                        class="primary-button"
+                        id="submit-button">
+
+                    Generate balanced groups
+                    <span>→</span>
+
+                </button>
+
+                <p class="privacy-note">
+                    Your files are processed to generate the Excel
+                    workbooks. Download your results after processing.
+                </p>
+
+            </form>
+        </section>
+
+        <section class="steps">
+
+            <div class="step">
+                <span class="step-number">01</span>
+
+                <div>
+                    <h3>Upload files</h3>
+                    <p>Select your student spreadsheets.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">02</span>
+
+                <div>
+                    <h3>Automatic grouping</h3>
+                    <p>SportSort creates balanced heats.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <span class="step-number">03</span>
+
+                <div>
+                    <h3>Download results</h3>
+                    <p>Get separate Excel workbooks by category.</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        SportSort · Simple, fair, organized.
+    </footer>
+
+    <script>
+        const fileInput = document.getElementById("files");
+        const dropZone = document.getElementById("drop-zone");
+        const selectedFiles = document.getElementById("selected-files");
+        const uploadForm = document.getElementById("upload-form");
+        const submitButton = document.getElementById("submit-button");
+
+        let selectedFileList = [];
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) {
+                return bytes + " B";
+            }
+
+            if (bytes < 1024 * 1024) {
+                return (bytes / 1024).toFixed(1) + " KB";
+            }
+
+            return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+        }
+
+        function renderFiles() {
+            selectedFiles.innerHTML = "";
+
+            if (selectedFileList.length === 0) {
+                return;
+            }
+
+            const heading = document.createElement("div");
+            heading.className = "file-list-heading";
+            heading.textContent =
+                selectedFileList.length + " file(s) selected";
+
+            selectedFiles.appendChild(heading);
+
+            selectedFileList.forEach(file => {
+                const item = document.createElement("div");
+                item.className = "file-item";
+
+                const name = document.createElement("span");
+                name.className = "file-name";
+                name.textContent = file.name;
+
+                const size = document.createElement("span");
+                size.className = "file-size";
+                size.textContent = formatFileSize(file.size);
+
+                item.appendChild(name);
+                item.appendChild(size);
+
+                selectedFiles.appendChild(item);
+            });
+        }
+
+        function updateFiles(files) {
+            const validFiles = Array.from(files).filter(file => {
+                const extension =
+                    file.name.split(".").pop().toLowerCase();
+
+                return ["xlsx", "xls", "csv"].includes(extension);
+            });
+
+            selectedFileList = validFiles;
+
+            const dataTransfer = new DataTransfer();
+
+            selectedFileList.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+
+            fileInput.files = dataTransfer.files;
+
+            renderFiles();
+        }
+
+        fileInput.addEventListener("change", function () {
+            updateFiles(this.files);
+        });
+
+        ["dragenter", "dragover"].forEach(eventName => {
+            dropZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                dropZone.classList.add("drag-active");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            dropZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                dropZone.classList.remove("drag-active");
+            });
+        });
+
+        dropZone.addEventListener("drop", event => {
+            updateFiles(event.dataTransfer.files);
+        });
+
+        uploadForm.addEventListener("submit", function (event) {
+            if (selectedFileList.length === 0) {
+                event.preventDefault();
+                alert("Please select at least one valid Excel or CSV file.");
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = "Processing files...";
+
+        });
+    </script>
+
+</body>
+</html>
